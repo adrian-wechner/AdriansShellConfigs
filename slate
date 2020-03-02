@@ -1,0 +1,9 @@
+alias hyper ctrl;alt;cmd
+alias hypershift ctrl;alt;cmd;shift
+
+# Hints
+bind e:${hyper} hint ASDFGHJKLQWERTYUIOPCVBN # use whatever keys you want
+bind g:${hyper} grid padding:5 0:6t,6 1:8,3
+bind r:${hyper} relaunch
+
+# REST YOU FIND IN ~/.slate.js

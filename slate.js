@@ -358,7 +358,7 @@ S.bind("j"+hyper, function(win) {
 });
 
 // Safari
-S.bind("h"+hyper, function(win) {
+S.bind("k"+hyper, function(win) {
   var app_name = 'Safari';
   if(win.app().name() == app_name) {
     cycleWindows(win);
@@ -370,7 +370,7 @@ S.bind("h"+hyper, function(win) {
 });
 
 // Finder
-S.bind("k"+hyper, function(win) {
+S.bind("l"+hyper, function(win) {
   var app_name = 'Finder';
   if(win.app().name() == app_name) {
     cycleWindows(win);
@@ -382,7 +382,7 @@ S.bind("k"+hyper, function(win) {
 });
 
 // Framer X
-S.bind("l"+hyper, function(win) {
+S.bind("u"+hyper, function(win) {
   var app_name = 'Framer X';
   if(win.app().name() == app_name) {
     cycleWindows(win);

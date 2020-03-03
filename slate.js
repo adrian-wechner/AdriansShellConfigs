@@ -200,10 +200,10 @@ S.bind("return"+hyper, function(win) {
     }));
   } else if(closestWidthRatio == 0.33 && closestHeightRatio == 1) {
     win.doOperation(S.op("move", {
-      "x": "screenOriginX+screenSizeX/4",
-      "y": "screenOriginY+screenSizeY/6",
-      "width": "screenSizeX/2",
-      "height": "screenSizeY/3*2"
+      "x": "screenOriginX+screenSizeX/8",
+      "y": "screenOriginY+screenSizeY/10",
+      "width": "screenSizeX*0.75",
+      "height": "screenSizeY*0.8"
     }));
   } else {
     win.doOperation(lapFull);
@@ -332,7 +332,7 @@ S.bind("down"+hyper, function(win) {
   }
 });
 
-
+/**** APP BINDINGS ****/
 // VS Code
 S.bind("h"+hyper, function(win) {
   var app_name = 'Code';

@@ -22,3 +22,7 @@ colorscheme molokai
 hi LineNr ctermbg=NONE ctermfg=darkgrey
 hi Visual ctermbg=darkgrey ctermfg=white
 
+" Enable mouse mode for vim
+set ttymouse=xterm2
+set mouse=a
+

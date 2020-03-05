@@ -74,9 +74,9 @@ function closest(num) {
 }
 
 function cycleBigger(curr) {
-  var closest = closest(curr);
+  var closestValue = closest(curr);
   var sizes = windowSizes();
-  var i = sizes.indexOf(curr);
+  var i = sizes.indexOf(closestValue);
   i = (i >= sizes.length - 1 ? 0 : i+1);
   return sizes[i];
 }
@@ -172,9 +172,23 @@ var stretchVertical = S.op("move", {
   "height": "screenSizeY"
 });
 
+var alignLeft = S.op("move", {
+  "x" : "screenOriginX",
+  "y" : "windowTopLeftY",
+  "width": "windowSizeX",
+  "height": "windowSizeY"
+});
+
 var alignRight = S.op("move", {
   "x" : "screenOriginX+screenSizeX-windowSizeX",
   "y" : "windowTopLeftY",
+  "width": "windowSizeX",
+  "height": "windowSizeY"
+});
+
+var alignTop = S.op("move", {
+  "x" : "windowTopLeftX",
+  "y" : "screenOriginY",
   "width": "windowSizeX",
   "height": "windowSizeY"
 });
@@ -186,9 +200,21 @@ var alignBottom = S.op("move", {
   "height": "windowSizeY"
 });
 
+var center = S.op("move", {
+  "x" : "(screenOriginX+screenSizeX)/2-(windowSizeX/2)",
+  "y" : "(screenOriginY+screenSizeY)/2-(windowSizeY/2)",
+  "width": "windowSizeX",
+  "height": "windowSizeY"
+});
+
 
 /*** BINDINGS ***/
 S.bind("return"+hyper, function(win) {
+  if(!win.isResizable()) {
+    win.doOperation(center);
+    return false;
+  }
+
   var closestWidthRatio = closest(percWidth(win));
   var closestHeightRatio = closest(percHeight(win));
   if(closestWidthRatio == 1 && closestHeightRatio == 1) {
@@ -211,7 +237,12 @@ S.bind("return"+hyper, function(win) {
 });
 
 S.bind("left"+hyper, function(win) {
-  if(leansLeft(win)) {
+  if(!win.isResizable()) {
+    win.doOperation(alignLeft);
+    return false;
+  }
+
+  if(leansLeft(win)) { // Hitting Left, being left => SHRINK TO THE LEFT
     var expression = "screenSizeX*" + cycleSmaller(percWidth(win));
     var before = win.size().width;
     var after = 0;
@@ -230,13 +261,45 @@ S.bind("left"+hyper, function(win) {
     if(before == after) {
       win.doOperation(stretchHorizontal);
     }
-  }
-  else {
+  } else if(leansRight(win)) { // Hitting Left, being right => GROW TO THE LEFT
+    var windowRatio = cycleBigger(percWidth(win));
+    var expression = "screenSizeX*" + windowRatio;
+    var before = win.size().width;
+    var after = 0;
+
+    win.doOperation(S.op("move", {
+      "x": (1-windowRatio) * win.screen().rect().width,
+      "y": "windowTopLeftY",
+      "width": expression,
+      "height": "windowSizeY"
+    }));
+
+    after = win.size().width;
+
+   // Check if outside of screen. and size changed. => Surpassed MIN => Re-Align                                  
+   // HACK: this is a hack, better would be to know minimum size beforehand                                       
+   if(win.topLeft().x + after > win.screen().rect().width + toleranceX(win) && before != after) {                 
+     win.doOperation(alignRight);                                                                                 
+   }  
+
+    // Check if sizing hasn't changed => MIN Reached => Expand
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(before == after) {
+      win.doOperation(stretchHorizontal);
+    }
+    
+  } else { // so favr so good. no changes here.
     win.doOperation(leftHalf);
   }
 });
 
+
 S.bind("right"+hyper, function(win) {
+  if(!win.isResizable()) {
+    win.doOperation(alignRight);
+    return false;
+  }
+
   if(leansRight(win)) {
     var windowRatio = cycleSmaller(percWidth(win));
     var expression = "screenSizeX*" + windowRatio;
@@ -264,13 +327,39 @@ S.bind("right"+hyper, function(win) {
     if(before == after) {
       win.doOperation(stretchHorizontal);
     }
-  }
-  else {
+  } else if(leansLeft(win)) {
+    var windowRatio = cycleBigger(percWidth(win));
+    var expression = "screenSizeX*" + windowRatio;
+    var before = win.size().width;
+    var after = 0;
+
+    // The desired Move
+    win.doOperation(S.op("move", {
+      "x": "screenOriginX",
+      "y": "windowTopLeftY",
+      "width": expression,
+      "height": "windowSizeY"
+    }));
+
+    after = win.size().width;
+    
+    // Check if sizing hasn't changed => MIN Reached => Expand
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(before == after) {
+      win.doOperation(stretchHorizontal);
+    }
+
+  } else {
     win.doOperation(rightHalf);
   }
 });
 
 S.bind("up"+hyper, function(win) {
+  if(!win.isResizable()) {
+    win.doOperation(alignTop);
+    return false;
+  }
+
   if(leansTop(win)) {
     var expression = "screenSizeY*" + cycleSmaller(percHeight(win));
     var before = win.size().height;
@@ -291,13 +380,46 @@ S.bind("up"+hyper, function(win) {
     if(before == after) {
       win.doOperation(stretchVertical);
     }
-  }
-  else {
+  } else if(leansBottom(win)) {
+    var compTop = win.screen().rect().height - win.screen().vrect().height;
+    var windowRatio = cycleBigger(percHeight(win));
+    var expression = "screenSizeY*" + windowRatio;
+    var before = win.size().height;
+    var after = 0;
+
+    // The desired UP Move
+    win.doOperation(S.op("move", {
+      "x": "windowTopLeftX",
+      "y": (1-windowRatio) * win.screen().vrect().height + compTop,
+      "width": "windowSizeX",
+      "height": expression
+    }));
+
+    after = win.size().height;
+
+    // Check if outside of screen. and size changed. => Surpassed MIN => Re-Align
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(win.topLeft().y + after > win.screen().rect().height + toleranceY(win) && before != after) {
+      win.doOperation(alignBottom);
+    }
+
+    // Check if sizing hasn't changed => MIN Reached => Expand
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(before == after) {
+      win.doOperation(stretchVertical);
+    }
+
+  } else {
     win.doOperation(topHalf);
   }
 });
 
 S.bind("down"+hyper, function(win) {
+  if(!win.isResizable()) {
+    win.doOperation(alignBottom);
+    return false;
+  }
+
   if(leansBottom(win)) {
     var compTop = win.screen().rect().height - win.screen().vrect().height;
     var windowRatio = cycleSmaller(percHeight(win));
@@ -326,94 +448,110 @@ S.bind("down"+hyper, function(win) {
     if(before == after) {
       win.doOperation(stretchVertical);
     }
-  }
-  else {
+  } else if(leansTop(win)) {
+    var compTop = win.screen().rect().height - win.screen().vrect().height;
+    var windowRatio = cycleBigger(percHeight(win));
+    var expression = "screenSizeY*" + windowRatio;
+    var before = win.size().height;
+    var after = 0;
+
+    // The desired UP Move
+    win.doOperation(S.op("move", {
+      "x": "windowTopLeftX",
+      "y": "screenOriginY",
+      "width": "windowSizeX",
+      "height": expression
+    }));
+
+    after = win.size().height;
+
+    // Check if outside of screen. and size changed. => Surpassed MIN => Re-Align
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(win.topLeft().y + after > win.screen().rect().height + toleranceY(win) && before != after) {
+      win.doOperation(alignBottom);
+    }
+
+    // Check if sizing hasn't changed => MIN Reached => Expand
+    // HACK: this is a hack, better would be to know minimum size beforehand
+    if(before == after) {
+      win.doOperation(stretchVertical);
+    }
+
+  } else {
     win.doOperation(bottomHalf);
   }
 });
 
 /**** APP BINDINGS ****/
-// VS Code
-S.bind("h"+hyper, function(win) {
-  var app_name = 'Code';
-  if(win.app().name() == app_name) {
+
+function getApp(win, app_name) {
+
+  // When already focused, then cycle through all the 
+  // open windows of the same application. Like CMD+`
+  if(win && win.app().name() == app_name) {
     cycleWindows(win);
   } else {
+
+    // BUG: Is not showing hidden windows.
+    //      Ideas is that "show" will reveal if hidden
+    //      And after that "focus" will actually focus the window(s)
+    S.op("show", { 
+      "app": app_name 
+    }).run();
+
     S.op("focus", {
       "app": app_name
     }).run();
   }
+}
+
+// VS Code
+S.bind("h"+hyper, function(win) {
+  getApp(win, 'Code');
 });
 
 // Terminal
 S.bind("j"+hyper, function(win) {
-  var app_name = 'Terminal';
-  if(win.app().name() == app_name) {
-    cycleWindows(win);
-  } else {
-    S.op("focus", {
-      "app": app_name  
-    }).run();
-  }
+  getApp(win, 'Terminal');
 });
 
 // Safari
 S.bind("k"+hyper, function(win) {
-  var app_name = 'Safari';
-  if(win.app().name() == app_name) {
-    cycleWindows(win);
-  } else {
-    S.op("focus", {
-      "app": app_name  
-    }).run();
-  }
+  getApp(win, 'Safari');
 });
 
 // Finder
 S.bind("l"+hyper, function(win) {
-  var app_name = 'Finder';
-  if(win.app().name() == app_name) {
-    cycleWindows(win);
-  } else {
-    S.op("focus", {
-      "app": app_name  
-    }).run();
-  }
+  getApp(win, 'Finder');
 });
 
 // Framer X
 S.bind("u"+hyper, function(win) {
-  var app_name = 'Framer X';
-  if(win.app().name() == app_name) {
-    cycleWindows(win);
-  } else {
-    S.op("focus", {
-      "app": app_name  
-    }).run();
-  }
+  getApp(win, 'Framer X');
 });
 
-// Focus Flow Left
-S.bind("left"+hypershift, S.op("focus", {
-  "direction": "left"
-}));
+// Google Chrome
+S.bind("i"+hyper, function(win) {
+  getApp(win, 'Google Chrome');
+});
 
-// Focus Flow Right
-S.bind("right"+hypershift, S.op("focus", {
-  "direction": "right"
-}));
+// IOS Simulator
+S.bind("o"+hyper, function(win) {
+  getApp(win, 'Simulator');
+});
 
-// Focus Flow Up
-S.bind("up"+hypershift, S.op("focus", {
-  "direction": "up"
-}));
+// Calculator
+S.bind("y"+hyper, function(win) {
+  getApp(win, 'Calculator');
+});
 
-// Focus Flow Down
-S.bind("down"+hypershift, S.op("focus", {
-  "direction": "down"
-}));
+// Force a Side when holding shift
+S.bind("left"+hypershift, leftHalf);
+S.bind("right"+hypershift, rightHalf);
+S.bind("up"+hypershift, topHalf);
+S.bind("down"+hypershift, bottomHalf);
 
-// Cycle/Focus Same App
+// Cycle/Focus through windows of the same Application
 S.bind("/"+hyper, function(win) {
   cycleWindows(win);
 });

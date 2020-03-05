@@ -1,0 +1,29 @@
+{
+    "editor.tabSize": 2,
+    "git.enableSmartCommit": true,
+    "workbench.tree.indent": 20,
+    "[pgsql]": {},
+    "pgsql.connection": "postgres://adrian@localhost:5432/filer_development",
+    "files.associations": {
+        "**/migrations/*/*.sql": "pgsql",
+        "*.js": "javascriptreact"
+    },
+    "mssql.intelliSense.enableErrorChecking": false,
+    "breadcrumbs.enabled": true,
+    "workbench.activityBar.visible": true,
+    "workbench.sideBar.location": "left",
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "javascript.validate.enable": false,
+    "editor.minimap.enabled": false,
+    "window.zoomLevel": 0,
+    "workbench.colorTheme": "Material Theme Ocean",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
+    "editor.formatOnSave": true,
+    "[javascript]": {
+        "editor.formatOnSave": true
+    }
+}

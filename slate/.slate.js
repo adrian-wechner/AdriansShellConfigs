@@ -545,6 +545,19 @@ S.bind("y"+hyper, function(win) {
   getApp(win, 'Calculator');
 });
 
+S.bind("f"+hyper, function(win) {
+  getApp(win, 'FaceTime');
+});
+
+S.bind("n"+hyper, function(win) {
+  getApp(win, 'Notes');
+});
+
+S.bind("w"+hyper, function(win) {
+  getApp(win, 'WhatsApp');
+});
+
+
 // Force a Side when holding shift
 S.bind("left"+hypershift, leftHalf);
 S.bind("right"+hypershift, rightHalf);
@@ -555,4 +568,8 @@ S.bind("down"+hypershift, bottomHalf);
 S.bind("/"+hyper, function(win) {
   cycleWindows(win);
 });
+
+
+var switcher = slate.operation("switch");
+slate.bind("tab"+hyper, switcher);
 
